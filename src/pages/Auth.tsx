@@ -1,19 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const { signIn, signUp, user } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Handle authentication
-    setTimeout(() => setIsLoading(false), 2000);
+    await signIn(email, password);
+    setIsLoading(false);
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      return;
+    }
+    setIsLoading(true);
+    await signUp(email, password, fullName);
+    setIsLoading(false);
   };
 
   return (
@@ -29,7 +52,7 @@ const Auth = () => {
         className="w-full max-w-md relative z-10"
       >
         <Link to="/" className="flex justify-center mb-8">
-          <span className="text-3xl font-bold text-gradient">LuxeStore</span>
+          <span className="text-3xl font-bold text-gradient">{"<DevMerch />"}</span>
         </Link>
 
         <Tabs defaultValue="login" className="glass p-8 rounded-2xl">
@@ -39,15 +62,17 @@ const Auth = () => {
           </TabsList>
 
           <TabsContent value="login">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="dev@example.com"
                   required
                   className="bg-card"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -58,6 +83,8 @@ const Auth = () => {
                   placeholder="••••••••"
                   required
                   className="bg-card"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -76,7 +103,7 @@ const Auth = () => {
           </TabsContent>
 
           <TabsContent value="signup">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -85,6 +112,8 @@ const Auth = () => {
                   placeholder="John Doe"
                   required
                   className="bg-card"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -92,9 +121,11 @@ const Auth = () => {
                 <Input
                   id="signup-email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="dev@example.com"
                   required
                   className="bg-card"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -105,6 +136,8 @@ const Auth = () => {
                   placeholder="••••••••"
                   required
                   className="bg-card"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -115,6 +148,8 @@ const Auth = () => {
                   placeholder="••••••••"
                   required
                   className="bg-card"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>

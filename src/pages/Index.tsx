@@ -1,12 +1,63 @@
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import ProductCard from "@/components/ProductCard";
 import CategoryCard from "@/components/CategoryCard";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
-  const featuredProducts = [
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+    fetchCategories();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    const { data } = await supabase
+      .from("products")
+      .select("*, categories(name)")
+      .limit(6);
+    
+    if (data) {
+      setFeaturedProducts(
+        data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          image: p.image_url,
+          category: p.categories?.name || "Uncategorized",
+          status: p.status,
+          quantity: p.quantity,
+        }))
+      );
+    }
+  };
+
+  const fetchCategories = async () => {
+    const { data } = await supabase.from("categories").select("*");
+    if (data) {
+      const categoryImages = {
+        "Hoodies": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500&h=500&fit=crop",
+        "T-Shirts": "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500&h=500&fit=crop",
+        "Accessories": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop",
+      };
+      
+      setCategories(
+        data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          image: categoryImages[c.name as keyof typeof categoryImages] || categoryImages["T-Shirts"],
+          count: 0,
+        }))
+      );
+    }
+  };
+
+  const oldFeaturedProducts = [
     {
       id: "1",
       name: "Premium Wireless Headphones",
@@ -37,7 +88,7 @@ const Index = () => {
     },
   ];
 
-  const categories = [
+  const oldCategories = [
     {
       name: "Electronics",
       image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=300&fit=crop",

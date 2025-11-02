@@ -31,6 +31,8 @@ const ProductDetail = () => {
       price: 449.99,
       image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop",
       category: "Wearables",
+      status: "available" as const,
+      quantity: 50,
     },
     {
       id: "6",
@@ -38,6 +40,8 @@ const ProductDetail = () => {
       price: 149.99,
       image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500&h=500&fit=crop",
       category: "Audio",
+      status: "available" as const,
+      quantity: 30,
     },
     {
       id: "3",
@@ -45,6 +49,8 @@ const ProductDetail = () => {
       price: 179.99,
       image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=500&fit=crop",
       category: "Accessories",
+      status: "sold_out" as const,
+      quantity: 0,
     },
   ];
 

@@ -16,8 +16,8 @@ const Hero = () => {
             transition={{ duration: 0.8 }}
             className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
           >
-            Discover Your{" "}
-            <span className="text-gradient">Perfect Style</span>
+            Code in Style{" "}
+            <span className="text-gradient">Deploy with Confidence</span>
           </motion.h1>
           
           <motion.p
@@ -26,7 +26,7 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-xl text-muted-foreground mb-8"
           >
-            Explore our curated collection of premium products designed for the modern lifestyle.
+            Premium dev merch for those who ship code and memes in production
           </motion.p>
           
           <motion.div
@@ -37,15 +37,13 @@ const Hero = () => {
           >
             <Link to="/products">
               <Button size="lg" className="gap-2 group">
-                Shop Now
+                Browse Merch
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="/categories">
-              <Button size="lg" variant="outline">
-                Browse Categories
-              </Button>
-            </Link>
+            <Button size="lg" variant="outline">
+              // TODO: Add to cart
+            </Button>
           </motion.div>
         </div>
       </div>

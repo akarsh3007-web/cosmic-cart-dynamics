@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import ProductCard from "@/components/ProductCard";
 import Footer from "@/components/Footer";
@@ -5,12 +6,46 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Products = () => {
   const [showFilters, setShowFilters] = useState(true);
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
-  const products = [
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, []);
+
+  const fetchProducts = async () => {
+    const { data } = await supabase
+      .from("products")
+      .select("*, categories(name)");
+    
+    if (data) {
+      setProducts(
+        data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          image: p.image_url,
+          category: p.categories?.name || "Uncategorized",
+          status: p.status,
+          quantity: p.quantity,
+        }))
+      );
+    }
+  };
+
+  const fetchCategories = async () => {
+    const { data } = await supabase.from("categories").select("*");
+    if (data) {
+      setCategories(data.map((c) => c.name));
+    }
+  };
+
+  const oldProducts = [
     {
       id: "1",
       name: "Premium Wireless Headphones",
@@ -69,7 +104,7 @@ const Products = () => {
     },
   ];
 
-  const categories = ["Electronics", "Audio", "Wearables", "Accessories", "Fashion"];
+  const oldCategories = ["Electronics", "Audio", "Wearables", "Accessories", "Fashion"];
 
   return (
     <div className="min-h-screen">
