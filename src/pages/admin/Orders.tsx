@@ -2,42 +2,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Eye } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Orders = () => {
-  const orders = [
-    {
-      id: "#1001",
-      customer: "John Doe",
-      date: "2025-01-15",
-      total: 299.99,
-      status: "Delivered",
-      items: 2,
-    },
-    {
-      id: "#1002",
-      customer: "Jane Smith",
-      date: "2025-01-16",
-      total: 449.99,
-      status: "Processing",
-      items: 1,
-    },
-    {
-      id: "#1003",
-      customer: "Bob Johnson",
-      date: "2025-01-17",
-      total: 179.99,
-      status: "Shipped",
-      items: 3,
-    },
-    {
-      id: "#1004",
-      customer: "Alice Williams",
-      date: "2025-01-18",
-      total: 899.99,
-      status: "Pending",
-      items: 1,
-    },
-  ];
+  const { data: orders } = useQuery({
+    queryKey: ['admin-orders'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -88,25 +66,36 @@ const Orders = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell>{order.date}</TableCell>
-                  <TableCell>{order.items}</TableCell>
-                  <TableCell>${order.total.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
-                      <Eye className="w-4 h-4" />
-                    </Button>
+              {orders && orders.length > 0 ? (
+                orders.map((order) => {
+                  const items = Array.isArray(order.items) ? order.items : [];
+                  return (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">#{order.id.slice(0, 8)}</TableCell>
+                      <TableCell>{order.user_id.slice(0, 8)}...</TableCell>
+                      <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>{items.length}</TableCell>
+                      <TableCell>${parseFloat(order.total.toString()).toFixed(2)}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded text-xs ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    No orders found
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>

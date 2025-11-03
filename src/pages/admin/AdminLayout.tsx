@@ -1,9 +1,23 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, Navigate } from "react-router-dom";
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const AdminLayout = () => {
   const location = useLocation();
+  const { isAdmin, loading, signOut } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -18,7 +32,7 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <aside className="w-64 glass border-r border-white/10 p-6 space-y-8">
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-gradient">LuxeStore</span>
+          <span className="text-2xl font-bold text-gradient">{"<DevMerch />"}</span>
           <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">Admin</span>
         </Link>
 
@@ -44,7 +58,7 @@ const AdminLayout = () => {
         </nav>
 
         <div className="pt-8 border-t border-white/10">
-          <Button variant="ghost" className="w-full justify-start gap-3">
+          <Button variant="ghost" className="w-full justify-start gap-3" onClick={signOut}>
             <LogOut className="w-5 h-5" />
             Logout
           </Button>

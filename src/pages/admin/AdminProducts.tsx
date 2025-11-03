@@ -2,42 +2,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 const AdminProducts = () => {
-  const products = [
-    {
-      id: "1",
-      name: "Premium Wireless Headphones",
-      category: "Audio",
-      price: 299.99,
-      stock: 45,
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "Smart Watch Pro",
-      category: "Wearables",
-      price: 449.99,
-      stock: 32,
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Designer Backpack",
-      category: "Accessories",
-      price: 179.99,
-      stock: 0,
-      status: "Out of Stock",
-    },
-    {
-      id: "4",
-      name: "Minimalist Camera",
-      category: "Electronics",
-      price: 899.99,
-      stock: 15,
-      status: "Active",
-    },
-  ];
+  const { data: products } = useQuery({
+    queryKey: ['admin-products'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('*, categories(name)')
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+  });
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'available':
+        return <Badge className="bg-primary/20 text-primary">Available</Badge>;
+      case 'sold_out':
+        return <Badge className="bg-destructive/20 text-destructive">Sold Out</Badge>;
+      case 'in_transition':
+        return <Badge className="bg-yellow-500/20 text-yellow-400">In Transition</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -78,35 +70,35 @@ const AdminProducts = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>${product.price}</TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded text-xs ${
-                        product.status === "Active"
-                          ? "bg-primary/20 text-primary"
-                          : "bg-destructive/20 text-destructive"
-                      }`}
-                    >
-                      {product.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon">
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+              {products && products.length > 0 ? (
+                products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>{product.categories?.name || 'N/A'}</TableCell>
+                    <TableCell>${parseFloat(product.price.toString()).toFixed(2)}</TableCell>
+                    <TableCell>{product.quantity}</TableCell>
+                    <TableCell>
+                      {getStatusBadge(product.status)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon">
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    No products found
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>

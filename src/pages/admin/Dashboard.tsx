@@ -1,33 +1,71 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ShoppingCart, Users, Package } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: "$45,231.89",
-      change: "+20.1% from last month",
-      icon: DollarSign,
-    },
-    {
-      title: "Orders",
-      value: "2,350",
-      change: "+15.3% from last month",
-      icon: ShoppingCart,
-    },
-    {
-      title: "Customers",
-      value: "1,234",
-      change: "+12.5% from last month",
-      icon: Users,
-    },
-    {
-      title: "Products",
-      value: "573",
-      change: "+8 new this month",
-      icon: Package,
-    },
-  ];
+  const { data: stats } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      const [productsRes, ordersRes, profilesRes] = await Promise.all([
+        supabase.from('products').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('total', { count: 'exact' }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true })
+      ]);
+
+      const totalRevenue = ordersRes.data?.reduce((sum, order) => sum + parseFloat(order.total.toString()), 0) || 0;
+
+      return [
+        {
+          title: "Total Revenue",
+          value: `$${totalRevenue.toFixed(2)}`,
+          change: "From all orders",
+          icon: DollarSign,
+        },
+        {
+          title: "Orders",
+          value: ordersRes.count?.toString() || "0",
+          change: `${ordersRes.count || 0} total orders`,
+          icon: ShoppingCart,
+        },
+        {
+          title: "Customers",
+          value: profilesRes.count?.toString() || "0",
+          change: "Registered users",
+          icon: Users,
+        },
+        {
+          title: "Products",
+          value: productsRes.count?.toString() || "0",
+          change: "In inventory",
+          icon: Package,
+        },
+      ];
+    }
+  });
+
+  const { data: recentOrders } = useQuery({
+    queryKey: ['recent-orders'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('id, total, status, created_at, user_id')
+        .order('created_at', { ascending: false })
+        .limit(4);
+      return data || [];
+    }
+  });
+
+  const { data: topProducts } = useQuery({
+    queryKey: ['top-products'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, price, image_url')
+        .limit(4);
+      return data || [];
+    }
+  });
 
   return (
     <div className="space-y-8">
@@ -37,7 +75,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => {
+        {stats?.map((stat) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.title} className="glass">
@@ -63,20 +101,24 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center justify-between py-3 border-b border-white/10 last:border-0">
-                  <div>
-                    <p className="font-medium">Order #{1000 + i}</p>
-                    <p className="text-sm text-muted-foreground">Customer Name</p>
+              {recentOrders && recentOrders.length > 0 ? (
+                recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between py-3 border-b border-white/10 last:border-0">
+                    <div>
+                      <p className="font-medium">Order #{order.id.slice(0, 8)}</p>
+                      <p className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">${parseFloat(order.total.toString()).toFixed(2)}</p>
+                      <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                        {order.status}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">${(Math.random() * 500 + 100).toFixed(2)}</p>
-                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
-                      Pending
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No orders yet</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -87,20 +129,25 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center justify-between py-3 border-b border-white/10 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-muted rounded" />
-                    <div>
-                      <p className="font-medium">Product Name {i}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {Math.floor(Math.random() * 100 + 50)} sold
-                      </p>
+              {topProducts && topProducts.length > 0 ? (
+                topProducts.map((product) => (
+                  <div key={product.id} className="flex items-center justify-between py-3 border-b border-white/10 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-muted rounded overflow-hidden">
+                        {product.image_url && (
+                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{product.name}</p>
+                      </div>
                     </div>
+                    <p className="font-medium">${parseFloat(product.price.toString()).toFixed(2)}</p>
                   </div>
-                  <p className="font-medium">${(Math.random() * 300 + 50).toFixed(2)}</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No products yet</p>
+              )}
             </div>
           </CardContent>
         </Card>
